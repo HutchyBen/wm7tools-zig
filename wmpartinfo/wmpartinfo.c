@@ -1,9 +1,7 @@
 #include <stdint.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
-#include <locale.h>
 #include <wchar.h>
 
 #include "../common/guid.h"
@@ -40,7 +38,26 @@ char *cheap_wchar_to_ascii(int16_t *chars) {
     return asciibuf;
 }
 
-int main(int argc, char **argv) {
+const char *partition_type_to_str(int type) {
+    switch (type) {
+        case wmpart_dos3_fat:
+            return "DOS3/FAT";
+        case wmpart_boot:
+            return "BOOT";
+        case wmpart_xip_rom:
+            return "XIP from ROM";
+        case wmpart_xip_ram:
+            return "XIP from RAM";
+        case wmpart_imgfs:
+            return "IMGFS";
+        case wmpart_padding:
+            return "Padding";
+        default:
+            return "Unknown";
+    }
+}
+
+int main(int argc, const char **argv) {
     if (argc < 2) {
         printf("usage: %s path/to/image\n", argv[0]);
         return -1;
@@ -55,21 +72,21 @@ int main(int argc, char **argv) {
 
     // read the mbr-like header
     // TODO(Emma): it's not quite MBR so we should probably figure out what this actually is
-    mbr_t part_hdr;
-    if (fread(&part_hdr, sizeof(part_hdr), 1, fp) != 1) {
+    mbr_t mbr_hdr;
+    if (fread(&mbr_hdr, sizeof(mbr_hdr), 1, fp) != 1) {
         printf("failed to read header\n");
         fclose(fp);
         return -1;
     }
 
     // verify a few values
-    if (part_hdr.partitions[0].type != 0xEF) {
-        printf("partition header has type 0x%02X instead of 0xEF\n", part_hdr.partitions[0].type);
+    if (mbr_hdr.partitions[0].type != 0xEF) {
+        printf("partition header has type 0x%02X instead of 0xEF\n", mbr_hdr.partitions[0].type);
         fclose(fp);
         return -1;
     }
-    if (part_hdr.signature[0] != 0x55 || part_hdr.signature[1] != 0xAA) {
-        printf("file header has signature 0x%02X,0x%02X instead of 0x55,0xAA\n", part_hdr.signature[0], part_hdr.signature[1]);
+    if (mbr_hdr.signature[0] != 0x55 || mbr_hdr.signature[1] != 0xAA) {
+        printf("file header has signature 0x%02X,0x%02X instead of 0x55,0xAA\n", mbr_hdr.signature[0], mbr_hdr.signature[1]);
         fclose(fp);
         return -1;
     }
@@ -93,15 +110,15 @@ int main(int argc, char **argv) {
     printf("  Name: %s\n", cheap_wchar_to_ascii(store_hdr.name));
     printf("  GUID: ");
     print_guid(store_hdr.guid);
-    printf("  Unk1: 0x%x\n", store_hdr.unk1);
+    printf("  Max Partition Count: 0x%x\n", store_hdr.num_sectors);
     printf("  Unk2: 0x%x\n", store_hdr.unk2);
     printf("  Unk3: 0x%x\n", store_hdr.unk3);
     printf("  Timestamp: TODO\n"); // store_hdr.timestamp
     printf("  Unk5: 0x%x\n", store_hdr.unk5);
 
-    // read partitions - there isn't a count afaict so just do it until we stop seeing partitions
+    // read partitions - each partition header is a sector long
     int parts = 0;
-    while (true)
+    for (int i = 0; i < store_hdr.num_sectors; i++)
     {
         wmpart_hdr_t part_hdr;
         if (fread(&part_hdr, sizeof(part_hdr), 1, fp) != 1) {
@@ -122,7 +139,7 @@ int main(int argc, char **argv) {
         printf("  Size: 0x%x (0x%x)\n", part_hdr.size_sectors, part_hdr.size_sectors * SECTOR_SIZE);
         printf("  Unk3: 0x%x\n", part_hdr.unk3);
         printf("  Timestamp: TODO\n"); // part_hdr.timestamp
-        printf("  Partition Type: 0x%x\n", part_hdr.partition_type);
+        printf("  Partition Type: %s (0x%x)\n", partition_type_to_str(part_hdr.partition_type), part_hdr.partition_type);
         printf("  Unk5: 0x%x\n", part_hdr.unk5);
         printf("  Unk6: 0x%x\n", part_hdr.unk6);
         parts++;

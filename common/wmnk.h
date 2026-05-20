@@ -58,4 +58,45 @@ typedef struct __attribute__((packed)) _wmnk_files_entry {
     uint32_t ulLoadOffset;
 } wmnk_files_entry_t;
 
+// COPYentry in WCE
+typedef struct __attribute__((packed)) _wmnk_copy_entry {
+    uint32_t ulSource;
+    uint32_t ulDest;
+    uint32_t ulCopyLen;
+    uint32_t ulDestLen;
+} wmnk_copy_entry_t;
+
+// info in WCE
+typedef struct __attribute__((packed)) _e32_info {
+    uint32_t rva;
+    uint32_t size;
+} e32_info_t;
+
+// e32_rom in WCE
+typedef struct __attribute__((packed)) _e32_rom {
+    uint16_t objcnt;
+    uint16_t imageflags;
+    uint32_t entryrva;
+    uint32_t vbase;
+    uint16_t subsysmajor;
+    uint16_t subsysminor;
+    uint32_t stackmax;
+    uint32_t vsize;
+    uint32_t sect14rva;
+    uint32_t sect14size;
+    e32_info_t unit[9];
+    uint16_t subsys;
+    uint16_t unknown; //wtf?
+} e32_rom_t;
+
+// o32_rom in WCE
+typedef struct __attribute__((packed)) _o32_rom {
+    uint32_t vsize;
+    uint32_t rva;
+    uint32_t psize;
+    uint32_t dataptr;
+    uint32_t realaddr;
+    uint32_t flags;
+} o32_rom_t;
+
 #endif // _WMNK_H_

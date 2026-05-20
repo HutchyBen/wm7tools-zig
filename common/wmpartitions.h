@@ -7,7 +7,7 @@ typedef struct __attribute__((packed)) _wmstore_hdr {
     char magic[8];
     uint8_t guid[0x10];
     int16_t name[0x20]; // wchar_t, 0x40
-    uint32_t unk1;
+    uint32_t num_sectors; // probably?
     uint32_t unk2;
     uint32_t unk3;
     uint64_t timestamp;
