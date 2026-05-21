@@ -6,3 +6,5 @@ bin
 *.bin
 *.nb
 XIP
+target/
+
