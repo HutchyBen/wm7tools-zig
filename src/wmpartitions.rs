@@ -20,8 +20,8 @@ pub struct WmstoreHdr {
     pub padding: [u8; 0x190],
 }
 
-impl WmstoreHdr {
-    pub fn from_bytes(bytes: [u8; 512]) -> Self {
+impl From<[u8; 512]> for WmstoreHdr {
+    fn from(bytes: [u8; 512]) -> Self {
         let mut name = [0i16; 0x20];
         for i in 0..0x20 {
             let offset = 8 + 16 + i * 2;
@@ -41,6 +41,18 @@ impl WmstoreHdr {
     }
 }
 
+impl TryFrom<&[u8]> for WmstoreHdr {
+    type Error = &'static str;
+
+    fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
+        if bytes.len() < 512 {
+            return Err("wmstore_hdr structure requires exactly 512 bytes");
+        }
+        let arr: [u8; 512] = bytes[0..512].try_into().unwrap();
+        Ok(Self::from(arr))
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WmpartHdr {
     pub magic: [u8; 8],
@@ -57,8 +69,8 @@ pub struct WmpartHdr {
     pub padding: [u8; 0x190],
 }
 
-impl WmpartHdr {
-    pub fn from_bytes(bytes: [u8; 512]) -> Self {
+impl From<[u8; 512]> for WmpartHdr {
+    fn from(bytes: [u8; 512]) -> Self {
         let mut name = [0i16; 0x20];
         for i in 0..0x20 {
             let offset = 8 + i * 2;
@@ -78,5 +90,17 @@ impl WmpartHdr {
             unk6: u32::from_le_bytes(bytes[108..112].try_into().unwrap()),
             padding: bytes[112..512].try_into().unwrap(),
         }
+    }
+}
+
+impl TryFrom<&[u8]> for WmpartHdr {
+    type Error = &'static str;
+
+    fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
+        if bytes.len() < 512 {
+            return Err("wmpart_hdr structure requires exactly 512 bytes");
+        }
+        let arr: [u8; 512] = bytes[0..512].try_into().unwrap();
+        Ok(Self::from(arr))
     }
 }
