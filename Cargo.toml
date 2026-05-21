@@ -18,3 +18,10 @@ path = "src/bin/wmpartinfo.rs"
 
 [dependencies]
 # No external dependencies required! pure, standard Rust.
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+

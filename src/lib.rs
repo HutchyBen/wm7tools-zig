@@ -1,10 +1,12 @@
 pub mod guid;
 pub mod mbr;
+pub mod mmap;
 pub mod wmnk;
 pub mod wmpartitions;
 
 pub use guid::Guid;
 pub use mbr::{Mbr, Partition};
+pub use mmap::{FileData, MappedFile};
 pub use wmnk::{
     E32Info, E32Rom, O32Rom, WmnkCopyEntry, WmnkFilesEntry, WmnkHdr, WmnkRomHdr, WmnkTocEntry,
 };
@@ -13,13 +15,14 @@ pub use wmpartitions::{
     WMPART_UNK_0X1B, WMPART_UNK_0X29, WMPART_XIP_RAM, WMPART_XIP_ROM,
 };
 
-/// Cheap UTF-16 representation to ASCII conversion using clean functional iterators.
+/// Cheap UTF-16 representation to ASCII conversion with pre-allocated capacity.
 pub fn cheap_wchar_to_ascii(chars: &[i16]) -> String {
-    chars
-        .iter()
-        .take_while(|&&c| c != 0)
-        .map(|&c| (c as u8) as char)
-        .collect()
+    let len = chars.iter().position(|&c| c == 0).unwrap_or(chars.len());
+    let mut s = String::with_capacity(len);
+    for &c in &chars[..len] {
+        s.push((c as u8) as char);
+    }
+    s
 }
 
 /// Translate partition type ID to its string representation.
